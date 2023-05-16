@@ -1,4 +1,3 @@
 {
-  "framework": "node-server",
-  "files": ["public/**"]
+  "framework": "node-server"
 }
