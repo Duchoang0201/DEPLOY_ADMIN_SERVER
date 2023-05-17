@@ -41,10 +41,6 @@ const {
 
 var app = express();
 
-// view engine setup
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "jade");
-
 app.use(logger("dev"));
 app.use(express.json()); //khả năng xử lý với Json ( cần thiết)
 app.use(express.urlencoded({ extended: false })); //Làm cho đường dẫn trở nên an toàn ( ví dụ dấu cách chuyển thành % vd: NGUYEN VAN -> NGUYEN%VAN)
