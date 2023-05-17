@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { Schema, model } = mongoose;
 
-const SlideSchema = Schema(
+const FeatureSchema = Schema(
   {
     title: { type: String, required: true },
     summary: { type: String, required: true },
@@ -18,12 +18,13 @@ const SlideSchema = Schema(
       type: Date,
     },
     updatedBy: { type: Object },
+    isDeleted: { trype: Boolean },
   },
   {
     versionKey: false,
   }
 );
 
-const Slide = model("Slide", SlideSchema);
+const Feature = model("Feature", FeatureSchema);
 
-module.exports = Slide;
+module.exports = Feature;
