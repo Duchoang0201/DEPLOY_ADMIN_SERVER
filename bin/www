@@ -31,7 +31,7 @@ var server = http.createServer(app);
 var server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "https://online-web-serveronline.netlify.app",
     methods: ["GET", "POST"],
   },
 });
