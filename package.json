@@ -2,12 +2,11 @@
   "name": "backend-express",
   "version": "0.0.0",
   "private": true,
-  "main": "app.js",
   "engines": {
     "node": "14.x"
   },
   "scripts": {
-    "start": "node app.js",
+    "start": "node ./bin/www",
     "dev": "nodemon ./bin/www"
   },
   "dependencies": {
