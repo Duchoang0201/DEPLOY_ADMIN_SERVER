@@ -8,7 +8,6 @@ var app = require("../app");
 var debug = require("debug")("backend-express:server");
 var http = require("http");
 const socketIO = require("socket.io");
-const { Employee, Message } = require("../models/Message");
 
 /**
  * Get port from environment and store in Express.
@@ -29,12 +28,8 @@ var server = http.createServer(app);
 //   },
 // });
 
-const io = require("socket.io")(8888, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-  },
-});
+var server = http.createServer(app);
+const io = socketIO(server);
 
 // io.listen(3000);
 
