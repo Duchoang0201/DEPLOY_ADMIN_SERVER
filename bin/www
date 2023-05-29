@@ -8,6 +8,7 @@ var app = require("../app");
 var debug = require("debug")("backend-express:server");
 var http = require("http");
 const socketIO = require("socket.io");
+const { Employee, Message } = require("../models/Message");
 
 /**
  * Get port from environment and store in Express.
@@ -21,22 +22,15 @@ app.set("port", port);
  */
 
 var server = http.createServer(app);
-// const io = socketIO(server, {
+
+// const io = require("socket.io")(8888, {
 //   cors: {
-//     origin: "http://localhost:8888",
+//     origin: "http://localhost:3000",
 //     methods: ["GET", "POST"],
 //   },
 // });
 
-var server = http.createServer(app);
-const io = socketIO(server, {
-  cors: {
-    origin: "https://online-web-serveronline.netlify.app",
-    methods: ["GET", "POST"],
-  },
-});
-
-// io.listen(3000);
+// const io = socketIO(server);
 
 let users = []; //Get list of users are active (  login successfully)
 
@@ -54,6 +48,14 @@ const getUser = (userId) => {
   return users.find((user) => user.userId === userId);
 };
 
+var server = http.createServer(app);
+const io = socketIO(server, {
+  cors: {
+    origin: process.env.WEB_ADMIN_URL || "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
+
 io.on("connection", (socket) => {
   // when connect
   console.log("a user connected.");
@@ -64,14 +66,15 @@ io.on("connection", (socket) => {
     io.emit("getUsers", users);
   });
 
-  // Emit userOnline event when a user connects
-  io.emit("userOnline", {
-    users,
-  });
-
   // send and get message
   socket.on("sendMessage", ({ senderId, receiverId, text }) => {
     const user = getUser(receiverId);
+
+    // Emit userOnline event when a user connects
+
+    io.emit("userOnline", {
+      users,
+    });
 
     // io.to().emit() to send 1 client
     if (user) {
@@ -101,7 +104,7 @@ io.on("connection", (socket) => {
   });
 });
 
-//send and get messages
+// send and get messages
 
 /**
  * Listen on provided port, on all network interfaces.

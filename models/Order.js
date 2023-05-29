@@ -9,20 +9,6 @@ const { Schema, model } = mongoose;
 
 const contactInformationSchema = new Schema({
   address: { type: String, required: true },
-  // city: { type: String, required: true },
-  // district: { type: String, required: true },
-  // ward: { type: String, required: true },
-  email: {
-    type: String,
-    validate: {
-      validator: function (value) {
-        const emailRegex = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
-        return emailRegex.test(value);
-      },
-      message: `{VALUE} is not a valid email`,
-    },
-    required: [true, "email is required"],
-  },
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
   phoneNumber: {
@@ -151,6 +137,11 @@ const orderSchema = new Schema({
   employeeId: { type: Schema.Types.ObjectId, ref: "Employee", required: false },
   contactInformation: contactInformationSchema,
   orderDetails: [orderDetailSchema],
+  position: {
+    lat: { type: String },
+    lng: { type: String },
+    name: { type: String },
+  },
 });
 
 // Virtual with Populate
