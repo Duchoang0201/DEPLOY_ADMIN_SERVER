@@ -77,8 +77,8 @@ io.on("connection", (socket) => {
     });
 
     // io.to().emit() to send 1 client
-    if (user) {
-      io.to(user.socketId).emit("getMessage", {
+    if (user?.socketId) {
+      io.to(user?.socketId).emit("getMessage", {
         senderId,
         text,
       });
