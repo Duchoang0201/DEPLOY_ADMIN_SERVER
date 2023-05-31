@@ -72,9 +72,9 @@ io.on("connection", (socket) => {
 
     // Emit userOnline event when a user connects
 
-    io.emit("userOnline", {
-      users,
-    });
+    // io.emit("userOnline", {
+    //   users,
+    // });
 
     // io.to().emit() to send 1 client
     if (user?.socketId) {
