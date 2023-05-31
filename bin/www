@@ -72,12 +72,13 @@ io.on("connection", (socket) => {
 
     // Emit userOnline event when a user connects
 
-    // io.emit("userOnline", {
-    //   users,
-    // });
+    io.emit("userOnline", {
+      users,
+    });
 
+    console.log("««««« user?.socketId »»»»»", user?.socketId);
     // io.to().emit() to send 1 client
-    if (user?.socketId) {
+    if (user?.userId) {
       io.to(user?.socketId).emit("getMessage", {
         senderId,
         text,
