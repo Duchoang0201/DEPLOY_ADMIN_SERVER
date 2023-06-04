@@ -296,7 +296,6 @@ router.patch(
       const itemId = req.params.id;
       const itemBody = req.body;
 
-      console.log("««««« itemBody »»»»»", itemBody);
       if (itemId) {
         let update = await Product.findByIdAndUpdate(itemId, itemBody, {
           new: true,
