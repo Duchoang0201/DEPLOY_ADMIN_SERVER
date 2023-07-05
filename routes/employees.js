@@ -241,21 +241,21 @@ router.post(
 
       const { _id, email: empEmail, firstName, lastName } = employee;
 
-      const token = encodeToken(_id, empEmail, firstName, lastName);
+      // const token = encodeToken(_id, empEmail, firstName, lastName);
 
-      const refreshToken = encodeRefreshToken(
-        _id,
-        empEmail,
-        firstName,
-        lastName
-      );
+      // const refreshToken = encodeRefreshToken(
+      //   _id,
+      //   empEmail,
+      //   firstName,
+      //   lastName
+      // );
       // await Employee.findByIdAndUpdate(employee._id, {
       //   refreshToken: refreshToken,
       // });
 
       res.status(200).json({
-        token,
-        refreshToken,
+        // token,
+        // refreshToken,
         userId: employee._id,
         // payload: employee,
       });
