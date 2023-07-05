@@ -228,9 +228,9 @@ router.post("/refreshToken", async (req, res, next) => {
 
 router.post(
   "/login",
-  // validateSchema(loginSchema),
+  validateSchema(loginSchema),
   // passport.authenticate("local", { session: false }),
-  // passport.authenticate(passportConfigLocal(Employee), { session: false }),
+  passport.authenticate(passportConfigLocal(Employee), { session: false }),
   async (req, res, next) => {
     try {
       const { email } = req.body;
@@ -249,16 +249,10 @@ router.post(
         firstName,
         lastName
       );
-      // const result = await Employee.findByIdAndUpdate(employee._id, {
-      //   $set: { refreshToken: refreshToken },
-      // });
+      await Employee.findByIdAndUpdate(employee._id, {
+        $set: { refreshToken: refreshToken },
+      });
 
-      console.log(
-        "««««« token,refreshToken,result »»»»»",
-        token,
-        refreshToken
-        // result
-      );
       res.status(200).json({
         token,
         refreshToken,
