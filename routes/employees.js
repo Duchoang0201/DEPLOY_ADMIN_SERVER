@@ -235,7 +235,6 @@ router.post(
     try {
       const { email } = req.body;
 
-      console.log("««««« email »»»»»", email);
       const employee = await Employee.findOne({ email });
 
       if (!employee) return res.status(404).send({ message: "Not found" });
