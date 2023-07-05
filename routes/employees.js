@@ -249,9 +249,9 @@ router.post(
         firstName,
         lastName
       );
-      await Employee.findByIdAndUpdate(employee._id, {
-        refreshToken: refreshToken,
-      });
+      // await Employee.findByIdAndUpdate(employee._id, {
+      //   refreshToken: refreshToken,
+      // });
 
       res.status(200).json({
         token,
