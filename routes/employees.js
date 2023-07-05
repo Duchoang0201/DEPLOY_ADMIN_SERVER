@@ -230,7 +230,7 @@ router.post(
   "/login",
   validateSchema(loginSchema),
   // passport.authenticate("local", { session: false }),
-  passport.authenticate(passportConfigLocal(Employee), { session: false }),
+  // passport.authenticate(passportConfigLocal(Employee), { session: false }),
   async (req, res, next) => {
     try {
       const { email } = req.body;
