@@ -249,10 +249,16 @@ router.post(
         firstName,
         lastName
       );
-      await Employee.findByIdAndUpdate(employee._id, {
+      const result = await Employee.findByIdAndUpdate(employee._id, {
         $set: { refreshToken: refreshToken },
       });
 
+      console.log(
+        "««««« token,refreshToken,result »»»»»",
+        token,
+        refreshToken,
+        result
+      );
       res.status(200).json({
         token,
         refreshToken,
