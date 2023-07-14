@@ -9,7 +9,7 @@ const {
 const { Employee } = require("../models");
 const yup = require("yup");
 const jwt = require("jsonwebtoken");
-const { authenToken } = require("../helpers/authenToken");
+// const { authenToken } = require("../helpers/authenToken");
 
 const {
   validateSchema,
@@ -19,13 +19,47 @@ const {
   employeeIdSchema,
 } = require("../validation/employee");
 const { encodeToken, encodeRefreshToken } = require("../helpers/jwtHelper");
+const { findDocument } = require("../helpers/MongoDbHelper");
 
-const ObjectId = require("mongodb").ObjectId;
+//CHECK ROLES
 
+const allowRoles = (...roles) => {
+  // return a middleware
+
+  return (req, res, next) => {
+    const bearerToken = req.get("Authorization").replace("Bearer ", "");
+
+    // DECODE TOKEN
+    const payload = jwt.decode(bearerToken, { json: true });
+
+    // AFTER DECODE TOKEN: GET UID FROM PAYLOAD
+
+    const { sub } = payload;
+
+    findDocument(sub, "employees").then((user) => {
+      if (user && user.roles) {
+        let oke = false;
+        user.roles.forEach((role) => {
+          if (roles.includes(role)) {
+            oke = true;
+            return;
+          }
+        });
+        if (oke) {
+          next();
+        } else {
+          res.status(403).json({ message: "User's not allowed to access " });
+        }
+      } else res.status(403).json({ message: "Forbiden" });
+    });
+  };
+};
 // Get all on Multiple conditions
+
 router.get(
   "/",
-
+  passport.authenticate("jwt", { session: false }),
+  allowRoles("admin"),
   async (req, res, next) => {
     try {
       const {
@@ -115,15 +149,24 @@ router.get(
 );
 
 // GET A DATA
-router.get("/:id", validateSchema(employeeIdSchema), async (req, res, next) => {
-  const itemId = req.params.id;
-  let found = await Employee.findById(itemId);
+router.get(
+  "/personal",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res, next) => {
+    const bearerToken = req.get("Authorization").replace("Bearer ", "");
 
-  if (found) {
-    return res.status(200).json({ oke: true, result: found });
+    // DECODE TOKEN
+    const payload = jwt.decode(bearerToken, { json: true });
+    const { sub } = payload;
+
+    let found = await Employee.findById(sub);
+
+    if (found) {
+      return res.status(200).json({ oke: true, result: found });
+    }
+    return res.status(410).json({ oke: false, message: "Object not found" });
   }
-  return res.status(410).json({ oke: false, message: "Object not found" });
-});
+);
 // POST DATA
 router.post("/", validateSchema(employeeBodySchema), async (req, res, next) => {
   try {
@@ -204,6 +247,8 @@ router.delete(
 router.patch(
   "/:id",
   validateSchema(employeeIdSchema),
+  passport.authenticate("jwt", { session: false }),
+  allowRoles("admin", "manager"),
   async (req, res, next) => {
     const itemId = req.params.id;
     const itemBody = req.body;
@@ -266,33 +311,48 @@ router.patch(
 
 /// set new Token
 router.post("/refreshToken", async (req, res, next) => {
-  const { refreshToken, id } = req?.body;
+  const { refreshToken } = req?.body;
 
   if (!refreshToken) {
     return res.sendStatus(401);
   }
 
-  const checkEmployee = await Employee.findById(id);
-  const EmployeeRefreshToken = checkEmployee.refreshToken;
-  if (!EmployeeRefreshToken) {
-    return res.sendStatus(403);
+  try {
+    jwt.verify(
+      refreshToken,
+      process.env.REFRESH_ACCESS_TOKEN,
+      async (err, data) => {
+        if (err) {
+          return res
+            .status(401)
+            .json({ message: "refreshToken is not a valid Token" });
+        }
+        const { sub, firstName, lastName } = data;
+
+        const employee = await Employee.findOne({
+          _id: sub,
+          refreshToken: refreshToken,
+        });
+
+        if (!employee) {
+          return res
+            .status(401)
+            .json({ message: "refreshToken and id's not match!" });
+        }
+
+        const token = encodeToken(sub, firstName, lastName, "Employee");
+        res.json({ token });
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
   }
-
-  jwt.verify(refreshToken, process.env.REFRESH_ACCESS_TOKEN, (err, data) => {
-    if (err) {
-      return res.sendStatus(403);
-    }
-    const { _id, empEmail, firstName, lastName } = data;
-
-    const accessToken = encodeToken(_id, empEmail, firstName, lastName);
-    res.json({ accessToken });
-  });
 });
 
 router.post(
   "/login",
   validateSchema(loginSchema),
-  // passport.authenticate("local", { session: false }),
   passport.authenticate(passportConfigLocal(Employee), { session: false }),
   async (req, res, next) => {
     try {
@@ -300,32 +360,32 @@ router.post(
 
       const employee = await Employee.findOne({ email });
 
-      if (!employee) return res.status(404).send({ message: "Not found" });
+      if (!employee) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
-      const { _id, email: empEmail, firstName, lastName } = employee;
+      const { _id, firstName, lastName } = employee;
+      const id = _id.toString();
 
-      const token = encodeToken(_id, empEmail, firstName, lastName);
-
+      const token = encodeToken(id, firstName, lastName, "Employee");
       const refreshToken = encodeRefreshToken(
-        _id,
-        empEmail,
+        id,
         firstName,
-        lastName
+        lastName,
+        "Employee"
       );
-      await Employee.findByIdAndUpdate(employee._id, {
+
+      await Employee.findByIdAndUpdate(id, {
         $set: { refreshToken: refreshToken },
       });
 
       res.status(200).json({
         token,
         refreshToken,
-        userId: employee._id,
       });
     } catch (err) {
-      res.status(401).json({
-        statusCode: 401,
-        message: "Login Unsuccessful",
-      });
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
     }
   }
 );
@@ -352,26 +412,22 @@ router.post(
 // }
 router.get(
   "/login/profile",
-  // passport.authenticate("jwt", { session: false }),
-  authenToken,
-  passport.authenticate(passportConfig(Employee), { session: false }),
+  passport.authenticate("jwt", { session: false }),
   async (req, res, next) => {
     try {
-      const employee = await Employee.findById(req.user._id);
+      const bearerToken = req.get("Authorization").replace("Bearer ", "");
+
+      // DECODE TOKEN
+      const payload = jwt.decode(bearerToken, { json: true });
+
+      // AFTER DECODE TOKEN: GET UID FROM PAYLOAD
+
+      const { sub } = payload;
+      const employee = await Employee.findById(sub, { password: 0 });
 
       if (!employee) return res.status(404).send({ message: "Not found" });
-      const responseData = {
-        _id: employee._id,
-        isAdmin: employee.isAdmin,
-        firstName: employee.firstName,
-        lastName: employee.lastName,
-        email: employee.email,
-        phoneNumber: employee.phoneNumber,
-        address: employee.address,
-        birthday: employee.birthday,
-      };
 
-      res.status(200).json(responseData);
+      res.status(200).json(employee);
     } catch (err) {
       res.sendStatus(500);
     }

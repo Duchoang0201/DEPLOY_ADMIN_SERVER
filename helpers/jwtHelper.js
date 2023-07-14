@@ -22,11 +22,10 @@ const jwtSettings = require("../constants/jwtSetting");
 
 //New
 //ACCESS-TOKEN
-const encodeToken = (userId, email, firstName, lastName) => {
+const encodeToken = (userId, firstName, lastName, position) => {
   const token = JWT.sign(
     {
-      _id: userId,
-      email: email,
+      position,
       fullName: `${firstName} - ${lastName}`,
     },
     jwtSettings.SECRET,
@@ -34,18 +33,18 @@ const encodeToken = (userId, email, firstName, lastName) => {
       expiresIn: "2h",
       audience: jwtSettings.AUDIENCE,
       issuer: jwtSettings.ISSUER,
+      subject: userId,
       algorithm: "HS512",
     }
   );
 
   return token;
 };
-//REFRESH-ACCESSTOKEn
-const encodeRefreshToken = (userId, email, firstName, lastName) => {
+
+const encodeRefreshToken = (userId, firstName, lastName, position) => {
   const token = JWT.sign(
     {
-      _id: userId,
-      email: email,
+      position,
       fullName: `${firstName} - ${lastName}`,
     },
     process.env.REFRESH_ACCESS_TOKEN,
@@ -53,6 +52,7 @@ const encodeRefreshToken = (userId, email, firstName, lastName) => {
       expiresIn: "5d",
       audience: jwtSettings.AUDIENCE,
       issuer: jwtSettings.ISSUER,
+      subject: userId,
       algorithm: "HS512",
     }
   );

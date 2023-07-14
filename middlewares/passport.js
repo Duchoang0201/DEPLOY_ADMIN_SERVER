@@ -56,29 +56,64 @@ const LocalStrategy = require("passport-local").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
 const { findDocument, findDocuments } = require("../helpers/MongoDbHelper");
 const jwtSettings = require("../constants/jwtSetting");
-const { Employee, Customer } = require("../models");
-const BasicStrategy = require("passport-http").BasicStrategy;
+const { Employee, Customer } = require("../models/index");
 
-const passportConfig = (model) => {
-  return new JwtStrategy(
-    {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken("Authorization"),
-      secretOrKey: jwtSettings.SECRET,
-    },
-    async (payload, done) => {
-      try {
-        const user = await model.findById(payload._id);
+// const passportConfig = (model) => {
+//   return new JwtStrategy(
+//     {
+//       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken("Authorization"),
+//       secretOrKey: jwtSettings.SECRET,
+//     },
+//     async (payload, done) => {
+//       try {
+//         const { position } = payload;
+//         let user;
 
-        if (!user) return done(null, false);
+//         console.log("««««« position »»»»»", position);
+//         if (position === "Employee") {
+//           user = await Employee.findById(payload.sub);
+//         } else if (position === "Customer") {
+//           user = await Customer.findById(payload.sub);
+//         } else {
+//           return done(null, false);
+//         }
 
-        return done(null, user);
-      } catch (error) {
-        done(error, false);
+//         if (!user) return done(null, false);
+
+//         return done(null, user);
+//       } catch (error) {
+//         done(error, false);
+//       }
+//     }
+//   );
+// };
+
+const passportConfig = new JwtStrategy(
+  {
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken("Authorization"),
+    secretOrKey: jwtSettings.SECRET,
+  },
+  async (payload, done) => {
+    try {
+      const { position } = payload;
+      let user;
+
+      if (position === "Employee") {
+        user = await Employee.findById(payload.sub);
+      } else if (position === "Customer") {
+        user = await Customer.findById(payload.sub);
+      } else {
+        return done(null, false);
       }
-    }
-  );
-};
 
+      if (!user) return done(null, false);
+
+      return done(null, user);
+    } catch (error) {
+      done(error, false);
+    }
+  }
+);
 const passportConfigLocal = (model) => {
   return new LocalStrategy(
     {

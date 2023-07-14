@@ -280,65 +280,81 @@ router.patch(
 //FRESH TOKEN :
 
 router.post("/refreshToken", async (req, res, next) => {
-  const { refreshToken, id } = req?.body;
+  const { refreshToken } = req?.body;
 
   if (!refreshToken) {
     return res.sendStatus(401);
   }
 
-  const checkCustomer = await Customer.findById(id);
-  const customerRefreshToken = checkCustomer?.refreshToken;
-  if (!customerRefreshToken) {
-    return res.sendStatus(403);
+  try {
+    jwt.verify(
+      refreshToken,
+      process.env.REFRESH_ACCESS_TOKEN,
+      async (err, data) => {
+        if (err) {
+          return res
+            .status(401)
+            .json({ message: "refreshToken is not a valid Token" });
+        }
+        const { sub, firstName, lastName } = data;
+
+        const employee = await Customer.findOne({
+          _id: sub,
+          refreshToken: refreshToken,
+        });
+
+        if (!employee) {
+          return res
+            .status(401)
+            .json({ message: "refreshToken and id's not match!" });
+        }
+
+        const token = encodeToken(sub, firstName, lastName, "Customer");
+        res.json({ token });
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
   }
-
-  jwt.verify(refreshToken, process.env.REFRESH_ACCESS_TOKEN, (err, data) => {
-    if (err) {
-      return res.sendStatus(403);
-    }
-    const { _id, empEmail, firstName, lastName } = data;
-
-    const accessToken = encodeToken(_id, empEmail, firstName, lastName);
-    res.json({ accessToken });
-  });
 });
 /// LOGIN
 router.post(
   "/login",
   validateSchema(loginSchema),
-  // passport.authenticate("local", { session: false }),
   passport.authenticate(passportConfigLocal(Customer), { session: false }),
   async (req, res, next) => {
     try {
       const { email } = req.body;
 
-      const customer = await Customer.findOne({ email });
+      const employee = await Customer.findOne({ email });
 
-      if (!customer) return res.status(404).send({ message: "Not found" });
+      if (!employee) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
-      const { _id, email: empEmail, firstName, lastName } = customer;
+      const { _id, firstName, lastName } = employee;
+      const id = _id.toString();
 
-      const token = encodeToken(_id, empEmail, firstName, lastName);
-
+      const token = encodeToken(id, firstName, lastName, "Customer");
       const refreshToken = encodeRefreshToken(
-        _id,
-        empEmail,
+        id,
         firstName,
-        lastName
+        lastName,
+        "Customer"
       );
-      await Customer.findByIdAndUpdate(customer._id, {
-        refreshToken: refreshToken,
+
+      await Customer.findByIdAndUpdate(id, {
+        $set: { refreshToken: refreshToken },
       });
+
       res.status(200).json({
         token,
         refreshToken,
-        userId: _id,
       });
     } catch (err) {
-      res.status(401).json({
-        statusCode: 401,
-        message: "Login Unsuccessful",
-      });
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
     }
   }
 );
@@ -367,7 +383,7 @@ router.get(
   "/login/profile",
   // passport.authenticate("jwt", { session: false }),
   authenToken,
-  passport.authenticate(passportConfig(Customer), { session: false }),
+  passport.authenticate("jwt", { session: false }),
   async (req, res, next) => {
     try {
       const customer = await Customer.findById(req.user._id);
