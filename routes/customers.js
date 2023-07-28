@@ -382,7 +382,7 @@ router.post(
 router.get(
   "/login/profile",
   // passport.authenticate("jwt", { session: false }),
-  authenToken,
+  // authenToken,
   passport.authenticate("jwt", { session: false }),
   async (req, res, next) => {
     try {

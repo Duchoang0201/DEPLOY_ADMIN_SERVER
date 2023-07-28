@@ -128,7 +128,9 @@ const passportConfigLocal = (model) => {
         const isCorrectPass = await user.isValidPass(password);
 
         if (!isCorrectPass)
-          return done(null, false, { message: "Invalid password" });
+          return done(null, false, {
+            message: "Invalid password",
+          });
 
         return done(null, user);
       } catch (error) {

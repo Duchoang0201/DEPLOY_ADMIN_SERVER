@@ -44,6 +44,7 @@ const { Message } = require("../models");
 io.on("connection", (socket) => {
   socket.on("client-message", async (data) => {
     socket.join(data.conversationId);
+
     if (data.type === "chat") {
       const dataMessage = {
         employee: data.employee,
