@@ -395,8 +395,12 @@ router.get(
         lastName: customer.lastName,
         email: customer.email,
         phoneNumber: customer.phoneNumber,
+        imageUrl: customer.imageUrl,
         address: customer.address,
         birthday: customer.birthday,
+        shippingAddress: customer.shippingAddress,
+        bio: customer.bio,
+        sex: customer.sex,
       };
 
       res.status(200).json(responseData);
